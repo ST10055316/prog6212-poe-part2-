@@ -11,3 +11,5 @@ updating my program class
 fixing the error that were in my home controller
 
 updating my claim views
+
+adding migrations 
