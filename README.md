@@ -7,3 +7,5 @@ fixed my controllers
 update my connection string
 
 updating my program class
+
+fixing the error that were in my home controller
