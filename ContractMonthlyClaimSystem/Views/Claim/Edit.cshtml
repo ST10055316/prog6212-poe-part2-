@@ -1,0 +1,124 @@
+﻿@model ContractMonthlyClaimSystem.Models.ViewModels.SubmitClaimViewModel
+@{
+    ViewData["Title"] = ViewContext.RouteData.Values["action"].ToString() == "Create" ? "Submit New Claim" : "Edit Claim";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">@ViewData["Title"]</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Claim Information</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        @if (ViewContext.RouteData.Values["action"].ToString() == "Edit")
+                        {
+                            <input type="hidden" asp-for="ClaimId" />
+                        }
+
+                        <div class="form-group">
+                            <label asp-for="ClaimPeriod">Claim Period *</label>
+                            <input type="month" asp-for="ClaimPeriod" class="form-control" required />
+                            <span asp-validation-for="ClaimPeriod" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="HoursWorked">Hours Worked *</label>
+                            <input type="number" asp-for="HoursWorked" class="form-control" min="0" step="0.5" required />
+                            <span asp-validation-for="HoursWorked" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="HourlyRate">Hourly Rate (R) *</label>
+                            <input type="number" asp-for="HourlyRate" class="form-control" min="0" step="0.01" required />
+                            <span asp-validation-for="HourlyRate" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Description">Description *</label>
+                            <textarea asp-for="Description" class="form-control" rows="3" required></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Comments">Additional Comments</label>
+                            <textarea asp-for="Comments" class="form-control" rows="2"></textarea>
+                            <span asp-validation-for="Comments" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="SupportingDocument">Supporting Document</label>
+                            <div class="custom-file">
+                                <input type="file" asp-for="SupportingDocument" class="custom-file-input" id="customFile">
+                                <label class="custom-file-label" for="customFile">Choose file...</label>
+                            </div>
+                            <small class="form-text text-muted">
+                                Allowed file types: PDF, DOCX, XLSX, JPG, PNG (Max: 5MB)
+                            </small>
+                            <span asp-validation-for="SupportingDocument" class="text-danger"></span>
+
+                            @if (!string.IsNullOrEmpty(Model.ExistingFileName))
+                            {
+                                <div class="mt-2">
+                                    <i class="fas fa-paperclip"></i> Current file: @Model.ExistingFileName
+                                </div>
+                            }
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i>
+                                @(ViewContext.RouteData.Values["action"].ToString() == "Create" ? "Submit Claim" : "Update Claim")
+                            </button>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Guidelines</h6>
+                </div>
+                <div class="card-body">
+                    <h6>Before submitting:</h6>
+                    <ul class="small">
+                        <li>Ensure all hours are accurately recorded</li>
+                        <li>Include detailed description of work performed</li>
+                        <li>Attach supporting documentation if available</li>
+                        <li>Verify claim period matches work period</li>
+                        <li>Double-check hourly rate and calculations</li>
+                    </ul>
+
+                    <h6>Approval Process:</h6>
+                    <ul class="small">
+                        <li>Claims are first reviewed by Programme Coordinator</li>
+                        <li>Final approval by Academic Manager</li>
+                        <li>You'll be notified at each stage</li>
+                        <li>Typical processing time: 3-5 business days</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Update custom file input label
+        document.querySelector('.custom-file-input').addEventListener('change', function(e) {
+            var fileName = document.getElementById("customFile").files[0].name;
+            var nextSibling = e.target.nextElementSibling;
+            nextSibling.innerText = fileName;
+        });
+    </script>
+}

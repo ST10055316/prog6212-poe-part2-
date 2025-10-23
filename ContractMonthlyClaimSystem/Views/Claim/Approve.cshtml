@@ -1,0 +1,146 @@
+﻿@model ContractMonthlyClaimSystem.Models.ViewModels.ApproveRejectViewModel
+@{
+    ViewData["Title"] = $"{Model.Action} Claim #{Model.ClaimId}";
+    var isApprove = Model.Action == "Approve";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">@Model.Action Claim #@Model.ClaimId</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Claim Summary</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.Claim != null)
+                    {
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <th>Lecturer:</th>
+                                        <td>@Model.Claim.LecturerName</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Department:</th>
+                                        <td>@Model.Claim.Department</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Claim Period:</th>
+                                        <td>@Model.Claim.ClaimPeriod.ToString("MMMM yyyy")</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <th>Hours:</th>
+                                        <td>@Model.Claim.HoursWorked</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Rate:</th>
+                                        <td>R @Model.Claim.HourlyRate.ToString("N2")</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Total:</th>
+                                        <td class="font-weight-bold">R @Model.Claim.TotalAmount.ToString("N2")</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <h6>Description:</h6>
+                                <p class="border p-3 rounded bg-light">@Model.Claim.Description</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">@Model.Action Details</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <input type="hidden" asp-for="ClaimId" />
+                        <input type="hidden" asp-for="Action" />
+
+                        <div class="form-group">
+                            <label asp-for="Comments">
+                                @(isApprove ? "Approval Comments (Optional):" : "Rejection Comments *:")
+                            </label>
+                            <textarea asp-for="Comments" class="form-control" rows="4" 
+                                      placeholder="@(isApprove ? "Add any additional comments..." : "Please provide reasons for rejection...")"
+                                      ></textarea>
+                            <span asp-validation-for="Comments" class="text-danger"></span>
+                            @if (!isApprove)
+                            {
+                                <small class="form-text text-muted">Comments are required when rejecting a claim.</small>
+                            }
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn @(isApprove ? "btn-success" : "btn-danger") btn-lg">
+                                <i class="fas @(isApprove ? "fa-check" : "fa-times")"></i> 
+                                @Model.Action Claim
+                            </button>
+                            <a href="@Url.Action("Pending")" class="btn btn-secondary btn-lg">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Review Guidelines</h6>
+                </div>
+                <div class="card-body">
+                    @if (isApprove)
+                    {
+                        <h6>Before approving:</h6>
+                        <ul class="small">
+                            <li>Verify hours claimed match expected workload</li>
+                            <li>Check that hourly rate is appropriate</li>
+                            <li>Ensure supporting documentation is adequate</li>
+                            <li>Confirm claim period is correct</li>
+                            <li>Review description for completeness</li>
+                        </ul>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Note:</strong> @(Context.User.IsInRole("ProgrammeCoordinator") ? 
+                            "Your approval will send this claim to the Academic Manager for final review." : 
+                            "Your approval will finalize this claim and complete the process.")
+                        </div>
+                    }
+                    else
+                    {
+                        <h6>When rejecting:</h6>
+                        <ul class="small">
+                            <li>Provide clear, constructive feedback</li>
+                            <li>Specify what information is missing or incorrect</li>
+                            <li>Suggest how the claim can be improved</li>
+                            <li>Be professional and objective</li>
+                            <li>The lecturer will see your comments</li>
+                        </ul>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Important:</strong> Rejected claims can be resubmitted by the lecturer after corrections.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,200 @@
+﻿@using System.Security.Claims
+@model ContractMonthlyClaimSystem.Models.ViewModels.ClaimViewModel
+@{
+    ViewData["Title"] = $"Claim Details - #{Model.ClaimId}";
+    var userRole = Context.User.FindFirst(ClaimTypes.Role)?.Value ?? "Lecturer";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">Claim #@Model.ClaimId</h1>
+                <div>
+                    <a href="@Url.Action("Index")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Claim Summary -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Claim Information</h6>
+                    <span class="badge badge-@GetStatusBadgeClass(Model.Status)">@Model.Status</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless table-sm">
+                                <tr>
+                                    <th>Lecturer:</th>
+                                    <td>@(Model.LecturerName ?? "Unknown")</td>
+                                </tr>
+                                <tr>
+                                    <th>Department:</th>
+                                    <td>@(Model.Department ?? "General")</td>
+                                </tr>
+                                <tr>
+                                    <th>Claim Period:</th>
+                                    <td>@Model.ClaimPeriod.ToString("MMMM yyyy")</td>
+                                </tr>
+                                <tr>
+                                    <th>Submission Date:</th>
+                                    <td>@Model.SubmissionDate.ToString("dd MMMM yyyy")</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless table-sm">
+                                <tr>
+                                    <th>Hours Worked:</th>
+                                    <td>@Model.HoursWorked.ToString("N1")</td>
+                                </tr>
+                                <tr>
+                                    <th>Hourly Rate:</th>
+                                    <td>R @Model.HourlyRate.ToString("N2")</td>
+                                </tr>
+                                <tr>
+                                    <th>Total Amount:</th>
+                                    <td class="font-weight-bold">R @Model.TotalAmount.ToString("N2")</td>
+                                </tr>
+                                <tr>
+                                    <th>Supporting Document:</th>
+                                    <td>
+                                        @if (Model.HasSupportingDocument)
+                                        {
+                                            <a href="@Url.Action("DownloadDocument", new { id = Model.ClaimId })" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-download"></i> Download
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">None</span>
+                                        }
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Description:</h6>
+                            <p class="border p-3 rounded bg-light">@(Model.Description ?? "No description provided")</p>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Comments))
+                    {
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <h6>Additional Comments:</h6>
+                                <p class="border p-3 rounded bg-light">@Model.Comments</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions & Approval Status -->
+        <div class="col-lg-4">
+            <!-- Actions Card -->
+            @if (userRole == "Lecturer" && Model.Status == "Submitted")
+            {
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Actions</h6>
+                    </div>
+                    <div class="card-body">
+                        <a href="@Url.Action("Edit", new { id = Model.ClaimId })" class="btn btn-warning btn-block mb-2">
+                            <i class="fas fa-edit"></i> Edit Claim
+                        </a>
+                    </div>
+                </div>
+            }
+
+            @if ((userRole == "ProgrammeCoordinator" || userRole == "AcademicManager") && (Model.CanApprove || Model.CanReject))
+            {
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Review Actions</h6>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.CanApprove)
+                        {
+                            <a href="@Url.Action("Approve", new { id = Model.ClaimId })" class="btn btn-success btn-block mb-2">
+                                <i class="fas fa-check"></i> Approve Claim
+                            </a>
+                        }
+                        @if (Model.CanReject)
+                        {
+                            <a href="@Url.Action("Reject", new { id = Model.ClaimId })" class="btn btn-danger btn-block">
+                                <i class="fas fa-times"></i> Reject Claim
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Approval History -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Approval History</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.Approvals != null && Model.Approvals.Any())
+                    {
+                        foreach (var approval in Model.Approvals)
+                        {
+                            <div class="mb-3 p-2 border rounded">
+                                <div class="d-flex justify-content-between">
+                                    <strong>@(approval.ApproverName ?? "Unknown")</strong>
+                                    <span class="badge badge-@(approval.Status == "Approved" ? "success" : "danger")">
+                                        @(approval.Status ?? "Pending")
+                                    </span>
+                                </div>
+                                <small class="text-muted">@(approval.ApproverRole ?? "Unknown Role")</small>
+                                <div class="mt-1">
+                                    <small>@(approval.ApprovalDate?.ToString("dd MMM yyyy") ?? "Not approved")</small>
+                                </div>
+                                @if (!string.IsNullOrEmpty(approval.Comments))
+                                {
+                                    <div class="mt-1">
+                                        <small><strong>Comments:</strong> @approval.Comments</small>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">No approvals yet.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    public string GetStatusBadgeClass(string status)
+    {
+        if (string.IsNullOrEmpty(status))
+            return "secondary";
+
+        return status switch
+        {
+            "Submitted" => "warning",
+            "UnderReview" => "info",
+            "Approved" => "success",
+            "Rejected" => "danger",
+            _ => "secondary"
+        };
+    }
+}

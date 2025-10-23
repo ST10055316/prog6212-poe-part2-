@@ -1,0 +1,200 @@
+﻿@using System.Security.Claims
+@model ContractMonthlyClaimSystem.Models.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    var userRole = Context.User.FindFirst(ClaimTypes.Role)?.Value ?? "Lecturer"; 
+    
+
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">Claim Dashboard</h1>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Claims
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalClaims</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-file-invoice fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Approved Claims
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.ApprovedClaims</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Pending Approval
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.PendingClaims</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Total Amount
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">R @Model.TotalAmount.ToString("N2")</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        @if (userRole == "Lecturer")
+                        {
+                            <div class="col-md-3 mb-3">
+                                <a href="@Url.Action("Create")" class="btn btn-primary btn-block">
+                                    <i class="fas fa-plus"></i> New Claim
+                                </a>
+                            </div>
+                        }
+                        <div class="col-md-3 mb-3">
+                            <a href="@Url.Action("Index")" class="btn btn-info btn-block">
+                                <i class="fas fa-list"></i> View All Claims
+                            </a>
+                        </div>
+                        @if (userRole == "ProgrammeCoordinator" || userRole == "AcademicManager")
+                        {
+                            <div class="col-md-3 mb-3">
+                                <a href="@Url.Action("Pending")" class="btn btn-warning btn-block">
+                                    <i class="fas fa-clock"></i> Pending Claims
+                                    @if (Model.PendingApprovals > 0)
+                                    {
+                                        <span class="badge badge-light ml-2">@Model.PendingApprovals</span>
+                                    }
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Claims -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Claims</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.RecentClaims.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Claim ID</th>
+                                        <th>Period</th>
+                                        <th>Hours</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Date Submitted</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var claim in Model.RecentClaims)
+                                    {
+                                        <tr>
+                                            <td>@claim.ClaimId</td>
+                                            <td>@claim.ClaimPeriod.ToString("MMM yyyy")</td>
+                                            <td>@claim.HoursWorked</td>
+                                            <td>R @((claim.HoursWorked * claim.HourlyRate).ToString("N2"))</td>
+                                            <td>
+                                                <span class="badge badge-@GetStatusBadgeClass(claim.Status)">@claim.Status</span>
+                                            </td>
+                                            <td>@claim.SubmissionDate.ToString("dd MMM yyyy")</td>
+                                            <td>
+                                                <a href="@Url.Action("Details", new { id = claim.ClaimId })" class="btn btn-sm btn-info">
+                                                    <i class="fas fa-eye"></i> View
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No recent claims found.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    public string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Submitted" => "warning",
+            "UnderReview" => "info",
+            "Approved" => "success",
+            "Rejected" => "danger",
+            _ => "secondary"
+        };
+    }
+}

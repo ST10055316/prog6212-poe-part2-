@@ -1,0 +1,110 @@
+﻿@model List<ContractMonthlyClaimSystem.Models.ViewModels.ClaimViewModel>
+@{
+    ViewData["Title"] = "Pending Claims";
+    var userRole = ViewBag.UserRole as string ?? "ProgrammeCoordinator";
+    var pendingCount = ViewBag.PendingCount as int? ?? 0;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">Pending Claims</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        Claims Awaiting Your Approval (@pendingCount)
+                    </h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Claim ID</th>
+                                        <th>Lecturer</th>
+                                        <th>Department</th>
+                                        <th>Claim Period</th>
+                                        <th>Hours</th>
+                                        <th>Amount</th>
+                                        <th>Submitted</th>
+                                        <th>Current Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var claim in Model)
+                                    {
+                                        <tr>
+                                            <td>@claim.ClaimId</td>
+                                            <td>@claim.LecturerName</td>
+                                            <td>@claim.Department</td>
+                                            <td>@claim.ClaimPeriod.ToString("MMM yyyy")</td>
+                                            <td>@claim.HoursWorked</td>
+                                            <td>R @claim.TotalAmount.ToString("N2")</td>
+                                            <td>@claim.SubmissionDate.ToString("dd MMM yyyy")</td>
+                                            <td>
+                                                <span class="badge badge-@GetStatusBadgeClass(claim.Status)">@claim.Status</span>
+                                                @if (claim.HasApprovalFromProgrammeCoordinator)
+                                                {
+                                                    <small class="d-block text-success">PC Approved</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="@Url.Action("Details", new { id = claim.ClaimId })" class="btn btn-info" title="View Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    @if (claim.CanApprove)
+                                                    {
+                                                        <a href="@Url.Action("Approve", new { id = claim.ClaimId })" class="btn btn-success" title="Approve">
+                                                            <i class="fas fa-check"></i>
+                                                        </a>
+                                                    }
+                                                    @if (claim.CanReject)
+                                                    {
+                                                        <a href="@Url.Action("Reject", new { id = claim.ClaimId })" class="btn btn-danger" title="Reject">
+                                                            <i class="fas fa-times"></i>
+                                                        </a>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <h5 class="text-success">All caught up!</h5>
+                            <p class="text-muted">There are no claims pending your approval at this time.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    public string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Submitted" => "warning",
+            "UnderReview" => "info",
+            "Approved" => "success",
+            "Rejected" => "danger",
+            _ => "secondary"
+        };
+    }
+}

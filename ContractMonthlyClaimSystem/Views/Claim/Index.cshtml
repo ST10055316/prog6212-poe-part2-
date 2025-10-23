@@ -1,0 +1,134 @@
+﻿@model List<ContractMonthlyClaimSystem.Models.ViewModels.ClaimViewModel>
+@{
+    ViewData["Title"] = "My Claims";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">My Claims</h1>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Search & Filter Claims</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" class="form-inline">
+                <div class="form-group mr-3 mb-2">
+                    <label for="status" class="mr-2">Status:</label>
+                    <select name="Status" class="form-control">
+                        <option value="">All Statuses</option>
+                        <option value="Submitted">Submitted</option>
+                        <option value="UnderReview">Under Review</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Rejected">Rejected</option>
+                    </select>
+                </div>
+                <div class="form-group mr-3 mb-2">
+                    <label for="month" class="mr-2">Month:</label>
+                    <input type="month" name="Month" class="form-control" />
+                </div>
+                <div class="form-group mr-3 mb-2">
+                    <label for="search" class="mr-2">Search:</label>
+                    <input type="text" name="SearchTerm" class="form-control" placeholder="Description..." />
+                </div>
+                <button type="submit" class="btn btn-primary mb-2">
+                    <i class="fas fa-search"></i> Search
+                </button>
+                <a href="@Url.Action("Index")" class="btn btn-secondary mb-2 ml-2">
+                    <i class="fas fa-refresh"></i> Clear
+                </a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Claims List -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Claims (@ViewBag.TotalCount total)</h6>
+            <a href="@Url.Action("Create")" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> New Claim
+            </a>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Claim ID</th>
+                                <th>Claim Period</th>
+                                <th>Description</th>
+                                <th>Hours</th>
+                                <th>Rate</th>
+                                <th>Total Amount</th>
+                                <th>Status</th>
+                                <th>Submitted</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var claim in Model)
+                            {
+                                <tr>
+                                    <td>@claim.ClaimId</td>
+                                    <td>@claim.ClaimPeriod.ToString("MMM yyyy")</td>
+                                    <td>@claim.Description</td>
+                                    <td>@claim.HoursWorked</td>
+                                    <td>R @claim.HourlyRate.ToString("N2")</td>
+                                    <td>R @claim.TotalAmount.ToString("N2")</td>
+                                    <td>
+                                        <span class="badge badge-@GetStatusBadgeClass(claim.Status)">@claim.Status</span>
+                                    </td>
+                                    <td>@claim.SubmissionDate.ToString("dd MMM yyyy")</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="@Url.Action("Details", new { id = claim.ClaimId })" class="btn btn-info">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            @if (claim.Status == "Submitted")
+                                            {
+                                                <a href="@Url.Action("Edit", new { id = claim.ClaimId })" class="btn btn-warning">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-4">
+                    <i class="fas fa-file-invoice fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No claims found</h5>
+                    <p class="text-muted">You haven't submitted any claims yet.</p>
+                    <a href="@Url.Action("Create")" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Submit Your First Claim
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@functions {
+    public string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Submitted" => "warning",
+            "UnderReview" => "info",
+            "Approved" => "success",
+            "Rejected" => "danger",
+            _ => "secondary"
+        };
+    }
+}

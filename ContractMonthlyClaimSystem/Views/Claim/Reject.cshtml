@@ -1,0 +1,300 @@
+﻿@model ContractMonthlyClaimSystem.Models.ViewModels.ApproveRejectViewModel
+@{
+    ViewData["Title"] = "Reject Claim";
+    var userRole = User.IsInRole("ProgrammeCoordinator") ? "ProgrammeCoordinator" :
+                  User.IsInRole("AcademicManager") ? "AcademicManager" : "";
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-times-circle me-2"></i>Reject Claim #@Model.ClaimId
+                </h4>
+            </div>
+            <div class="card-body">
+                <!-- Warning Alert -->
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Important Action</h6>
+                    <p class="mb-0">You are about to reject this claim. Please provide constructive feedback to help the lecturer understand what needs to be corrected.</p>
+                </div>
+
+                <!-- Claim Summary -->
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle me-2"></i>Claim Summary</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Lecturer:</strong> @Model.Claim.LecturerName<br>
+                            <strong>Hours Worked:</strong> @Model.Claim.HoursWorked.ToString("F2")<br>
+                            <strong>Hourly Rate:</strong> @Model.Claim.HourlyRate.ToString("C")
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Total Amount:</strong> <span class="text-success fw-bold">@Model.Claim.TotalAmount.ToString("C")</span><br>
+                            <strong>Claim Period:</strong> @Model.Claim.ClaimPeriod.ToString("MMMM yyyy")<br>
+                            <strong>Current Status:</strong> <span class="badge bg-warning">@Model.Claim.Status</span>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Claim.Description))
+                    {
+                        <hr class="my-2">
+                        <div class="mt-2">
+                            <strong>Work Description:</strong>
+                            <div class="bg-white p-2 rounded mt-1">
+                                @Model.Claim.Description
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Rejection Form -->
+                <form asp-action="Reject" method="post" id="rejectForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="ClaimId" />
+                    <input type="hidden" asp-for="Action" value="Reject" />
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="mb-4">
+                        <label asp-for="Comments" class="form-label fw-bold">
+                            <i class="fas fa-comment me-1"></i>Rejection Reason *
+                        </label>
+                        <textarea asp-for="Comments" class="form-control" rows="5"
+                                  placeholder="Please provide detailed reasons for rejecting this claim. Be specific about what needs correction and provide clear instructions for resubmission..."></textarea>
+                        <span asp-validation-for="Comments" class="text-danger small"></span>
+                        <div class="form-text">
+                            <strong>Required:</strong> These comments will be visible to the lecturer and should explain why the claim was rejected and what needs to be fixed.
+                        </div>
+                    </div>
+
+                    <!-- Common Rejection Reasons (Quick Select) -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-bolt me-1"></i>Common Rejection Reasons
+                        </label>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <button type="button" class="btn btn-outline-secondary btn-sm w-100 mb-1"
+                                        onclick="addCommonReason('Insufficient supporting documentation provided')">
+                                    Insufficient Documentation
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button type="button" class="btn btn-outline-secondary btn-sm w-100 mb-1"
+                                        onclick="addCommonReason('Hours claimed appear excessive or unreasonable')">
+                                    Excessive Hours
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button type="button" class="btn btn-outline-secondary btn-sm w-100 mb-1"
+                                        onclick="addCommonReason('Work description is unclear or incomplete')">
+                                    Unclear Description
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button type="button" class="btn btn-outline-secondary btn-sm w-100 mb-1"
+                                        onclick="addCommonReason('Incorrect hourly rate or calculation error')">
+                                    Calculation Error
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button type="button" class="btn btn-outline-secondary btn-sm w-100 mb-1"
+                                        onclick="addCommonReason('Claim period does not match work performed')">
+                                    Period Mismatch
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button type="button" class="btn btn-outline-secondary btn-sm w-100 mb-1"
+                                        onclick="addCommonReason('Work does not meet quality standards')">
+                                    Quality Issues
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                        <a href="@Url.Action("Details", "Claim", new { id = Model.ClaimId })" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Details
+                        </a>
+                        <div>
+                            <a href="@Url.Action("Pending", "Claim")" class="btn btn-outline-primary me-2">
+                                <i class="fas fa-list me-1"></i>Pending Claims
+                            </a>
+                            <button type="submit" class="btn btn-danger btn-lg px-4"
+                                    onclick="return confirmReject()">
+                                <i class="fas fa-times me-1"></i>Reject Claim
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Rejection Guidelines -->
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Rejection Guidelines
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning small">
+                    <strong>Provide constructive feedback:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Be specific about what needs correction</li>
+                        <li>Provide clear instructions for resubmission</li>
+                        <li>Maintain professional and respectful tone</li>
+                        <li>Reference any missing documentation</li>
+                        <li>Suggest improvements where possible</li>
+                        <li>Focus on facts and requirements</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Impact Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>What Happens Next?
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-light border small">
+                    <strong>After rejection:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Claim status changes to "Rejected"</li>
+                        <li>Lecturer will be notified with your comments</li>
+                        <li>Lecturer can submit a new claim with corrections</li>
+                        <li>Rejection reason is recorded in history</li>
+                        <li>All actions are logged for audit purposes</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role Information -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-tie me-2"></i>Your Responsibility
+                </h5>
+            </div>
+            <div class="card-body">
+                @if (userRole == "ProgrammeCoordinator")
+                {
+                    <div class="alert alert-info small">
+                        <strong>As Programme Coordinator:</strong>
+                        <p class="mb-0 mt-1">
+                            Your rejection will prevent the claim from proceeding to Academic Manager review.
+                            Ensure your feedback helps the lecturer understand how to correct the claim.
+                        </p>
+                    </div>
+                }
+                else if (userRole == "AcademicManager")
+                {
+                    <div class="alert alert-danger small">
+                        <strong>As Academic Manager:</strong>
+                        <p class="mb-0 mt-1">
+                            Your rejection is final. The claim will not proceed further in the approval process.
+                            Provide comprehensive feedback for any future submissions.
+                        </p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        // Auto-focus on comments textarea
+        document.addEventListener('DOMContentLoaded', function() {
+            const commentsTextarea = document.getElementById('Comments');
+            if (commentsTextarea) {
+                commentsTextarea.focus();
+            }
+        });
+
+        // Add common rejection reason
+        function addCommonReason(reason) {
+            const textarea = document.getElementById('Comments');
+            const currentText = textarea.value.trim();
+
+            if (currentText) {
+                textarea.value = currentText + '\n\n• ' + reason;
+            } else {
+                textarea.value = '• ' + reason;
+            }
+
+            textarea.focus();
+        }
+
+        // Confirmation before rejection
+        function confirmReject() {
+            const comments = document.getElementById('Comments').value.trim();
+
+            if (!comments) {
+                alert('Please provide a rejection reason before proceeding.');
+                document.getElementById('Comments').focus();
+                return false;
+            }
+
+            if (comments.length < 10) {
+                const proceed = confirm('Your rejection reason seems very brief. Are you sure you want to proceed with this minimal feedback?');
+                if (!proceed) {
+                    document.getElementById('Comments').focus();
+                    return false;
+                }
+            }
+
+            return confirm('Are you sure you want to reject this claim?\n\nThis action cannot be undone and the lecturer will be notified of your decision.');
+        }
+
+        // Character count and validation
+        document.addEventListener('DOMContentLoaded', function() {
+            const commentsTextarea = document.getElementById('Comments');
+            if (commentsTextarea) {
+                // Create character counter and validator
+                const counter = document.createElement('div');
+                counter.className = 'form-text text-end';
+                counter.id = 'commentsCounter';
+                counter.innerHTML = '<span id="commentsCount">0</span>/2000 characters <span id="minLengthWarning" class="text-danger d-none"> - Minimum 10 characters required</span>';
+                commentsTextarea.parentNode.appendChild(counter);
+
+                // Validation function
+                function validateComments() {
+                    const count = commentsTextarea.value.length;
+                    const minLengthWarning = document.getElementById('minLengthWarning');
+
+                    document.getElementById('commentsCount').textContent = count;
+
+                    if (count > 2000) {
+                        counter.classList.add('text-danger');
+                    } else {
+                        counter.classList.remove('text-danger');
+                    }
+
+                    if (count > 0 && count < 10) {
+                        minLengthWarning.classList.remove('d-none');
+                    } else {
+                        minLengthWarning.classList.add('d-none');
+                    }
+                }
+
+                // Update on input
+                commentsTextarea.addEventListener('input', validateComments);
+
+                // Initialize
+                validateComments();
+            }
+        });
+    </script>
+}
